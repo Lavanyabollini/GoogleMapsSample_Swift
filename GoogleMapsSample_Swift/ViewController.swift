@@ -69,20 +69,14 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
         
 //        self.mapView = GMSMapView(frame: self.googleMapsContainer.frame)
 //        self.view.addSubview(self.mapView)
-       // self.addressLabel.text = "test text"
 
         searchResultController = SearchResultsController()
         searchResultController.delegate = self
         gmsFetcher = GMSAutocompleteFetcher()
         gmsFetcher.delegate = self
-       // self.addressLabel.text = self.addressString
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        
-           self.addressLabel.text = self.addressString
-        }
+    
     /**
      action for search location by address
      
@@ -181,14 +175,6 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
     }
 
     
-//    override func loadView() {
-////        let panoramaNear = CLLocationCoordinate2D(latitude: 50.059139, longitude: -122.958391)
-////        
-////        let panoView = GMSPanoramaView.panorama(withFrame: .zero,
-////                                                nearCoordinate: panoramaNear)
-////        
-////        view = panoView;
-//    }
     
     
     private func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
