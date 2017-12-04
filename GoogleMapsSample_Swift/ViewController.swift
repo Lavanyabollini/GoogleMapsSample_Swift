@@ -11,7 +11,7 @@ import GoogleMaps
 import GooglePlaces
 
 class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDelegate, UISearchBarDelegate ,LocateOnTheMap,GMSAutocompleteFetcherDelegate  {
-
+    var locationCoordinate=CLLocationCoordinate2D()
     @IBOutlet weak var searchButton: UIBarButtonItem!
     @IBOutlet weak var mapView: GMSMapView!
     let locationManager = CLLocationManager()
@@ -20,8 +20,44 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
     var searchResultController: SearchResultsController!
     var resultsArray = [String]()
     var gmsFetcher: GMSAutocompleteFetcher!
+    @IBOutlet weak var googleMapsContainer: UIView!
     
-    @IBOutlet weak var googleMapsContainer: UIView! 
+ 
+
+    
+//MARK:- View Life Cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
+        self.mapView.delegate = self
+        // self.loadingMapView(maptype:.normal)
+        if CLLocationManager.locationServicesEnabled() {
+            locationManager.delegate = self
+            locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+            locationManager.startUpdatingLocation()
+        }
+
+
+    }
+   
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+//        self.mapView = GMSMapView(frame: self.googleMapsContainer.frame)
+//        self.view.addSubview(self.mapView)
+
+        searchResultController = SearchResultsController()
+        searchResultController.delegate = self
+        gmsFetcher = GMSAutocompleteFetcher()
+        gmsFetcher.delegate = self
+    }
+    
+    
+   
+    
+//MARK:- GMSAutocompleteFetcherDelegate Methods
     /**
      * Called when an autocomplete request returns an error.
      * @param error the error that was received.
@@ -45,54 +81,11 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
         }
         self.searchResultController.reloadDataWithArray(self.resultsArray)
         //   self.searchResultsTable.reloadDataWithArray(self.resultsArray)
-        print(resultsArray)
-    }
-    
-
-    
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-       // self.loadingMapView(maptype:.normal)
-        locationManager.delegate = self
-        locationManager.requestWhenInUseAuthorization()
-        mapView.delegate = self
-
-    }
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-    }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        
-//        self.mapView = GMSMapView(frame: self.googleMapsContainer.frame)
-//        self.view.addSubview(self.mapView)
-
-        searchResultController = SearchResultsController()
-        searchResultController.delegate = self
-        gmsFetcher = GMSAutocompleteFetcher()
-        gmsFetcher.delegate = self
+        // print(resultsArray)
     }
     
     
-    /**
-     action for search location by address
-     
-     - parameter sender: button search location
-     */
-    @IBAction func searchWithAddress(_ sender: AnyObject) {
-        let searchController = UISearchController(searchResultsController: searchResultController)
-        
-        searchController.searchBar.delegate = self
-        
-        
-        
-        self.present(searchController, animated:true, completion: nil)
-        
-        
-    }
+//MARK:- LocateOnTheMap custom delegate
     
     /**
      Locate map with longitude and longitude after search location on UISearchBar
@@ -103,9 +96,6 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
      */
     func locateWithLongitude(_ lon:Double, andLatitude lat:Double, andTitle title: String)
  {
-    
-        
-        
         DispatchQueue.main.async { () -> Void in
             
             let position = CLLocationCoordinate2DMake(lat, lon)
@@ -121,6 +111,7 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
         
     }
     
+//MARK:- Searchbar delegate
     /**
      Searchbar when text change
      
@@ -154,18 +145,10 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
         
         self.resultsArray.removeAll()
         gmsFetcher?.sourceTextHasChanged(searchText)
-        
-        
     }
     
     
- 
-    
-    
-    
-    
-    
-    
+//MARK:- GMSMapView delegates method
     func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {
         reverseGeocodeCoordinate(coordinate: position.target)
     }
@@ -176,77 +159,98 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
 
     
     
-    
+//MARK:- CLLocationManager delegate method
+  
     private func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
-        // 3
+     
         if status == .authorizedWhenInUse {
             
-            // 4
+         
             locationManager.startUpdatingLocation()
             
-            //5
+         
             mapView.isMyLocationEnabled = true
             mapView.settings.myLocationButton = true
         }
     }
     
-    // 6
+  
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first {
             
-            // 7
+            let locValue:CLLocationCoordinate2D = manager.location!.coordinate
+            print("locations = \(locValue.latitude) \(locValue.longitude)")
             mapView.camera = GMSCameraPosition(target: location.coordinate, zoom: 15, bearing: 0, viewingAngle: 0)
-            
-            // 8
+        
             locationManager.stopUpdatingLocation()
         }
         
     }
     
-    func reverseGeocodeCoordinate(coordinate: CLLocationCoordinate2D) {
-        
-       
-        let geocoder = GMSGeocoder()
-        
-       
-        geocoder.reverseGeocodeCoordinate(coordinate) { response, error in
- 
-            if let response = response {
-             let  address = response.firstResult()
-               
-                if  let lines = address?.lines{
-                DispatchQueue.main.async {
-                    self.addressLabel.text=lines.joined(separator: "\n")
-                    }
-                }
 
-            }
+    
+    
+    func mapView(_ mapView: GMSMapView, didLongPressAt coordinate: CLLocationCoordinate2D) {
+        let marker = GMSMarker(position: coordinate)
+        //removing previous markers
+        self.mapView.clear()
+//        marker.title = "Hello World"
+//        marker.map = mapView
+        
+        
+        
+//        let position = CLLocationCoordinate2DMake(lat, lon)
+//        let marker = GMSMarker(position: position)
+//
+//        let camera = GMSCameraPosition.camera(withLatitude: lat, longitude: lon, zoom: 10)
+//        self.mapView.camera = camera
+                marker.icon = UIImage(named: "MarkerImage")
+        marker.title = "Address : \(String(describing:title))"
+        marker.map = self.mapView
+           }
+    
+    func mapView(_ mapView: GMSMapView, didTapAt coordinate: CLLocationCoordinate2D) {
+        //removing previous markers
+        self.mapView.clear()
+//        print("Tapped at coordinate: " + String(coordinate.latitude) + " "
+//            + String(coordinate.longitude))
+        
             
-                // 4
-                UIView.animate(withDuration: 0.25) {
-                    self.view.layoutIfNeeded()
-            }
-        }
-    }
-   
-    func loadingMapView(maptype:GMSMapViewType)  {
-        navigationItem.title = "Hello Map"
 
+                let position = CLLocationCoordinate2DMake(coordinate.latitude,coordinate.longitude)
+                let marker = GMSMarker(position: position)
         
-        let camera = GMSCameraPosition.camera(withLatitude: -33.868,
-                                              longitude: 151.2086,
-                                              zoom: 14)
-        mapView.camera=camera
-        mapView.mapType=maptype
-        let marker = GMSMarker()
-        marker.position = camera.target
-        marker.snippet = "Hello World"
-        marker.appearAnimation = .pop
+                let camera = GMSCameraPosition.camera(withLatitude:coordinate.latitude, longitude: coordinate.longitude, zoom: 5)
+                self.mapView.camera = camera
+           // mapView.setMinZoom(0, maxZoom: 15)
+
         marker.icon = UIImage(named: "MarkerImage")
-        marker.map = mapView
-        
-        view = mapView
+        marker.title = "Address : \(String(describing: self.title))"
+             marker.map = self.mapView
+       
     }
+    
+
+    
+//MARK:- IBAction methods
+    /**
+     action for search location by address
+     
+     - parameter sender: button search location
+     */
+    @IBAction func searchWithAddress(_ sender: AnyObject) {
+       // self.mapView.clear()
+        let searchController = UISearchController(searchResultsController: searchResultController)
+        
+        searchController.searchBar.delegate = self
+        
+        
+        
+        self.present(searchController, animated:true, completion: nil)
+        
+        
+    }
+    
     @IBAction func changeModesButtonClicked(_ sender:UIBarButtonItem) {
         // Create the AlertController and add its actions like button in ActionSheet
         let actionSheetController = UIAlertController(title: "Please select", message: "Option to select", preferredStyle: .actionSheet)
@@ -303,13 +307,19 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
         actionSheetController.addAction(cancelActionButton)
         
         let stylingActionButton = UIAlertAction(title: "Styling", style: .default) { action -> Void in
-            self.stylingSelected()
+            if (self.locationCoordinate) != nil{
+            self.stylingSelected(coordinate: self.locationCoordinate)
+            }else{
+                
+            }
             print("Styling")
         }
         actionSheetController.addAction(stylingActionButton)
         
         let streetViewActionButton = UIAlertAction(title: "StreetView", style: .default) { action -> Void in
-            self.streeViewSelected()
+            if (self.locationCoordinate) != nil{
+            self.streeViewSelected(coordinate: self.locationCoordinate)
+            }
             print("streetView")
         }
         actionSheetController.addAction(streetViewActionButton)
@@ -332,8 +342,59 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
         self.present(actionSheetController, animated: true, completion: nil)
   
     }
-    //MARK: styling
-    func stylingSelected() {
+    
+    
+    
+//MARK:- Other methods
+    func reverseGeocodeCoordinate(coordinate: CLLocationCoordinate2D) {
+        
+        self.locationCoordinate = coordinate
+
+        let geocoder = GMSGeocoder()
+        
+        
+        geocoder.reverseGeocodeCoordinate(coordinate) { response, error in
+            
+            if let response = response {
+                let  address = response.firstResult()
+                
+                if  let lines = address?.lines{
+                    DispatchQueue.main.async {
+                        self.addressLabel.text=lines.joined(separator: "\n")
+                    }
+                }
+                
+            }
+            
+            // 4
+            UIView.animate(withDuration: 0.25) {
+                self.view.layoutIfNeeded()
+            }
+        }
+    }
+    
+    
+    func loadingMapView(maptype:GMSMapViewType)  {
+        navigationItem.title = "Hello Map"
+        
+        
+        let camera = GMSCameraPosition.camera(withLatitude: -33.868,
+                                              longitude: 151.2086,
+                                              zoom: 14)
+        mapView.camera=camera
+        mapView.mapType=maptype
+        let marker = GMSMarker()
+        marker.position = camera.target
+        marker.snippet = "Hello World"
+        marker.appearAnimation = .pop
+        marker.icon = UIImage(named: "MarkerImage")
+        marker.map = mapView
+        
+        view = mapView
+    }
+    
+//MARK: styling
+    func stylingSelected(coordinate: CLLocationCoordinate2D) {
         do {
             // Set the map style by passing the URL of the local file.
             if let styleURL = Bundle.main.url(forResource: "style", withExtension: "json") {
@@ -345,16 +406,20 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
             NSLog("The style definition could not be loaded: \(error)")
         }
     }
-    //MARK: streeView
-    func streeViewSelected(){
-        let panoramaNear = CLLocationCoordinate2D(latitude: 50.059139, longitude: -122.958391)
+    
+    
+//MARK: streeView
+    func streeViewSelected(coordinate: CLLocationCoordinate2D){
+        let panoramaNear = CLLocationCoordinate2D(latitude:coordinate.latitude, longitude: coordinate.longitude)
         
         let panoView = GMSPanoramaView.panorama(withFrame: .zero,
                                                 nearCoordinate: panoramaNear)
         
         view = panoView;
     }
-    //MARK: polylines
+    
+    
+//MARK: polylines
     func polyLinesSelected() {
 //        let camera = GMSCameraPosition.camera(withLatitude: 0,
 //                                              longitude: -165,
