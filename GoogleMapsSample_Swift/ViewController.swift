@@ -22,8 +22,29 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
     var gmsFetcher: GMSAutocompleteFetcher!
     @IBOutlet weak var googleMapsContainer: UIView!
     
- 
-
+    @IBOutlet weak var containerView: UIView!
+    //    var routePolyline: GMSPolyline!
+//    var originMarker: GMSMarker!
+//
+//    var destinationMarker: GMSMarker!
+//    var markersArray: Array<GMSMarker> = []
+//
+//    var waypointsArray: Array<String> = []
+//
+//    let baseURLDirections = "https://maps.googleapis.com/maps/api/directions/json?"
+//
+//    var selectedRoute: Dictionary<NSObject, AnyObject>!
+//
+//    var overviewPolyline: Dictionary<NSObject, AnyObject>!
+//
+//    var originCoordinate: CLLocationCoordinate2D!
+//
+//    var destinationCoordinate: CLLocationCoordinate2D!
+//
+//    var originAddress: String!
+//
+//    var destinationAddress: String!
+//
     
 //MARK:- View Life Cycle
     override func viewDidLoad() {
@@ -458,5 +479,104 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
         let mapView = GMSMapView.map(withFrame: .zero, camera: camera)
         view = mapView
     }
+    
+    //MARK:- other methods
+    func getPolylineRoute(from source: CLLocationCoordinate2D, to destination: CLLocationCoordinate2D){
+        
+        let config = URLSessionConfiguration.default
+        let session = URLSession(configuration: config)
+        
+        let url = URL(string: "http://maps.googleapis.com/maps/api/directions/json?origin=\(source.latitude),\(source.longitude)&destination=\(destination.latitude),\(destination.longitude)&sensor=false&mode=driving")!
+        
+        let task = session.dataTask(with: url, completionHandler: {
+            (data, response, error) in
+            if error != nil {
+                print(error!.localizedDescription)
+            }else{
+                do {
+                    if let json : [String:Any] = try JSONSerialization.jsonObject(with: data!, options: .allowFragments) as? [String: Any]{
+                        
+                        let routes = json["routes"] as? [Any]
+                        let overview_polyline = routes?[0] as?[String:Any]
+                        let polyString = overview_polyline?["points"] as?String
+                        
+                        //Call this method to draw path on map
+                        self.showPath(polyStr: polyString!)
+                    }
+                    
+                }catch{
+                    print("error in JSONSerialization")
+                }
+            }
+        })
+        task.resume()
+    }
+    func showPath(polyStr :String){
+        let path = GMSPath(fromEncodedPath: polyStr)
+        let polyline = GMSPolyline(path: path)
+        polyline.strokeWidth = 3.0
+        polyline.map = mapView // Your map view
+    }
+   
+//    func displayRouteInfo() {
+//        addressLabel.text = mapTasks.totalDistance + "\n" + mapTasks.totalDuration
+//    }
+    @IBAction func createRoute(sender: AnyObject) {
+        containerView.isHidden=false
+//        let addressAlert = UIAlertController(title: "Create Route", message: "Connect locations with a route:", preferredStyle: UIAlertControllerStyle.alert)
+//        
+//        addressAlert.addTextField { (textField) -> Void in
+//            textField.placeholder = "Origin?"
+////            self.searchWithAddress(sender)
+//        }
+//        
+//        addressAlert.addTextField { (textField) -> Void in
+//            textField.placeholder = "Destination?"
+////            self.searchWithAddress(sender)
+//
+//        }
+//        self.searchWithAddress(sender)
+//
+//        
+//        let createRouteAction = UIAlertAction(title: "Create Route", style: UIAlertActionStyle.default) { (alertAction) -> Void in
+//            if let polyline = self.routePolyline {
+//                self.clearRoute()
+//                self.waypointsArray.removeAll(keepingCapacity: false)
+//            }
+//            
+//            let origin = (addressAlert.textFields![0] as UITextField).text as! String
+//            let destination = (addressAlert.textFields![1] as UITextField).text as! String
+//            
+//         // self.getPolylineRoute(from: origin, to: destination)
+//        }
+//        
+//        let closeAction = UIAlertAction(title: "Close", style: UIAlertActionStyle.cancel) { (alertAction) -> Void in
+//            
+//        }
+//        
+//        addressAlert.addAction(createRouteAction)
+//        addressAlert.addAction(closeAction)
+//        
+//        present(addressAlert, animated: true, completion: nil)
+//    }
+//   
+//    func clearRoute() {
+//        originMarker.map = nil
+//        destinationMarker.map = nil
+//        routePolyline.map = nil
+//        
+//        originMarker = nil
+//        destinationMarker = nil
+//        routePolyline = nil
+//        
+//        if markersArray.count > 0 {
+//            for marker in markersArray {
+//                marker.map = nil
+//            }
+//            
+//            markersArray.removeAll(keepingCapacity: false)
+//        }
+   }
+    
 }
 
