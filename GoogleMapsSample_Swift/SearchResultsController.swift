@@ -8,8 +8,9 @@
 
 import UIKit
 
-protocol LocateOnTheMap{
-    func locateWithLongitude(_ lon:Double, andLatitude lat:Double, andTitle title: String)
+@objc protocol LocateOnTheMap{
+
+    @objc optional func locateWithLongitude(_ lon:Double, andLatitude lat:Double, andTitle title: String)
 }
 
 class SearchResultsController: UITableViewController {
@@ -71,7 +72,7 @@ class SearchResultsController: UITableViewController {
                     
                     let lon =   (((((dic.value(forKey: "results") as! NSArray).object(at: 0) as! NSDictionary).value(forKey: "geometry") as! NSDictionary).value(forKey: "location") as! NSDictionary).value(forKey: "lng")) as! Double
                     // 4
-                    self.delegate.locateWithLongitude(lon, andLatitude: lat, andTitle: self.searchResults[indexPath.row])
+                    self.delegate.locateWithLongitude!(lon, andLatitude: lat, andTitle: self.searchResults[indexPath.row])
                 }
                 
             }catch {

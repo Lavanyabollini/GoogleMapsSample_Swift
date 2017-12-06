@@ -10,7 +10,7 @@ import UIKit
 import GoogleMaps
 import GooglePlaces
 
-class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDelegate, UISearchBarDelegate ,LocateOnTheMap,GMSAutocompleteFetcherDelegate  {
+class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDelegate, UISearchBarDelegate ,LocateOnTheMap,GMSAutocompleteFetcherDelegate,UIPopoverPresentationControllerDelegate  {
     var locationCoordinate=CLLocationCoordinate2D()
     @IBOutlet weak var searchButton: UIBarButtonItem!
     @IBOutlet weak var mapView: GMSMapView!
@@ -22,7 +22,6 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
     var gmsFetcher: GMSAutocompleteFetcher!
     @IBOutlet weak var googleMapsContainer: UIView!
     
-    @IBOutlet weak var containerView: UIView!
     //    var routePolyline: GMSPolyline!
 //    var originMarker: GMSMarker!
 //
@@ -261,15 +260,16 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
      */
     @IBAction func searchWithAddress(_ sender: AnyObject) {
        // self.mapView.clear()
-        let searchController = UISearchController(searchResultsController: searchResultController)
-        
-        searchController.searchBar.delegate = self
-        
-        
-        
-        self.present(searchController, animated:true, completion: nil)
-        
-        
+//        let searchController = UISearchController(searchResultsController: searchResultController)
+//
+//        searchController.searchBar.delegate = self
+//
+//
+//
+//        self.present(searchController, animated:true, completion: nil)
+//
+//
+        self.searchForAddress()
     }
     
     @IBAction func changeModesButtonClicked(_ sender:UIBarButtonItem) {
@@ -518,65 +518,46 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
         polyline.map = mapView // Your map view
     }
    
-//    func displayRouteInfo() {
-//        addressLabel.text = mapTasks.totalDistance + "\n" + mapTasks.totalDuration
-//    }
+func searchForAddress()
+{
+    let searchController = UISearchController(searchResultsController: searchResultController)
+    searchController.searchBar.delegate = self
+    self.present(searchController, animated:true, completion: nil)
+    }
     @IBAction func createRoute(sender: AnyObject) {
-        containerView.isHidden=false
-//        let addressAlert = UIAlertController(title: "Create Route", message: "Connect locations with a route:", preferredStyle: UIAlertControllerStyle.alert)
-//        
-//        addressAlert.addTextField { (textField) -> Void in
-//            textField.placeholder = "Origin?"
-////            self.searchWithAddress(sender)
-//        }
-//        
-//        addressAlert.addTextField { (textField) -> Void in
-//            textField.placeholder = "Destination?"
-////            self.searchWithAddress(sender)
+       // containerView.isHidden=false
+//        let popoverContent = self.storyboard?.instantiateViewController(withIdentifier: "NewViewController") as! UIViewController
+//        let nav = UINavigationController(rootViewController: popoverContent)
+//        nav.modalPresentationStyle = UIModalPresentationStyle.popover
+//        var popover = nav.popoverPresentationController
+//        popoverContent.preferredContentSize = CGSize.init(width: 200, height: 200)
+//           // CGSizeMake(500,600)
+//        popover?.delegate = self as? UIPopoverPresentationControllerDelegate
+//        popover?.sourceView = self.view
+//        popover?.sourceRect = CGRect(x: 100, y: 100, width:0, height:0)
+//            //CGRectMake(100,100,0,0)
 //
-//        }
-//        self.searchWithAddress(sender)
-//
-//        
-//        let createRouteAction = UIAlertAction(title: "Create Route", style: UIAlertActionStyle.default) { (alertAction) -> Void in
-//            if let polyline = self.routePolyline {
-//                self.clearRoute()
-//                self.waypointsArray.removeAll(keepingCapacity: false)
-//            }
-//            
-//            let origin = (addressAlert.textFields![0] as UITextField).text as! String
-//            let destination = (addressAlert.textFields![1] as UITextField).text as! String
-//            
-//         // self.getPolylineRoute(from: origin, to: destination)
-//        }
-//        
-//        let closeAction = UIAlertAction(title: "Close", style: UIAlertActionStyle.cancel) { (alertAction) -> Void in
-//            
-//        }
-//        
-//        addressAlert.addAction(createRouteAction)
-//        addressAlert.addAction(closeAction)
-//        
-//        present(addressAlert, animated: true, completion: nil)
-//    }
-//   
-//    func clearRoute() {
-//        originMarker.map = nil
-//        destinationMarker.map = nil
-//        routePolyline.map = nil
-//        
-//        originMarker = nil
-//        destinationMarker = nil
-//        routePolyline = nil
-//        
-//        if markersArray.count > 0 {
-//            for marker in markersArray {
-//                marker.map = nil
-//            }
-//            
-//            markersArray.removeAll(keepingCapacity: false)
-//        }
+//        self.present(nav, animated: true, completion: nil)
+
+        
+        let vc = self.storyboard?.instantiateViewController(withIdentifier: "NewViewController") as! UIViewController
+        //vc.view.backgroundColor = UIColor.blue
+        vc.modalPresentationStyle = UIModalPresentationStyle.popover
+        let popvc = vc.popoverPresentationController
+        popvc?.delegate = self
+        popvc?.permittedArrowDirections = UIPopoverArrowDirection.any
+        popvc?.barButtonItem = sender as? UIBarButtonItem
+        vc.preferredContentSize = CGSize.init(width: 250, height: 200)
+        
+        self.present(vc, animated: true, completion: nil)
    }
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        return UIModalPresentationStyle.none
+    }
+    
+    func popoverPresentationControllerShouldDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) -> Bool {
+        return true
+    }
     
 }
 
