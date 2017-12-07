@@ -52,7 +52,7 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
         locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
         self.mapView.delegate = self
-        // self.loadingMapView(maptype:.normal)
+         self.loadingMapView(maptype:.normal)
         if CLLocationManager.locationServicesEnabled() {
             locationManager.delegate = self
             locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
@@ -170,7 +170,7 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
     
 //MARK:- GMSMapView delegates method
     func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {
-        reverseGeocodeCoordinate(coordinate: position.target)
+     //   reverseGeocodeCoordinate(coordinate: position.target)
     }
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -459,6 +459,24 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
         
         view = mapView
     }
+    func  polyLinesSelected(from source: CLLocationCoordinate2D, to destination: CLLocationCoordinate2D) {
+        //        let camera = GMSCameraPosition.camera(withLatitude: 0,
+        //                                              longitude: -165,
+        //                                              zoom: 2)
+        //        mapView.camera=camera
+        let path = GMSMutablePath()
+        path.addLatitude(source.latitude, longitude:source.longitude)
+        path.addLatitude(source.latitude+0.5, longitude:source.longitude+0.5)
+        path.addLatitude(destination.latitude, longitude:destination.longitude)
+        path.addLatitude(destination.latitude+0.5, longitude:destination.longitude+0.5)
+
+        let polyline = GMSPolyline(path: path)
+        polyline.strokeColor = .red
+        polyline.strokeWidth = 5.0
+        polyline.map = mapView
+        
+        view = mapView
+    }
     
     func cameraSelected(){
         let camera = GMSCameraPosition.camera(withLatitude: -37.809487,
@@ -483,33 +501,113 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
     //MARK:- other methods
     func getPolylineRoute(from source: CLLocationCoordinate2D, to destination: CLLocationCoordinate2D){
         
+//        let config = URLSessionConfiguration.default
+//        let session = URLSession(configuration: config)
+//
+//        let url = URL(string: "http://maps.googleapis.com/maps/api/directions/json?origin=\(source.latitude),\(source.longitude)&destination=\(destination.latitude),\(destination.longitude)&sensor=false&mode=driving")!
+//
+//        let task = session.dataTask(with: url, completionHandler: {
+//            (data, response, error) in
+//            if error != nil {
+//                print(error!.localizedDescription)
+//            }else{
+//                do {
+//                    if let json : [String:Any] = try JSONSerialization.jsonObject(with: data!, options: .allowFragments) as? [String: Any]{
+//
+//                        let routes = json["routes"] as? [Any]
+//                        let overview_polyline = routes?[0] as?[String:Any]
+//                        let polyString = overview_polyline?["points"] as?String
+//
+//                        //Call this method to draw path on map
+////                        if let stringValue = polyString{
+////                            self.showPath(polyStr: stringValue)
+////                        }else{
+////
+////                        }
+//
+//                        DispatchQueue.main.async {
+//                        let path = GMSMutablePath()
+//                        path.addLatitude(source.latitude, longitude:source.longitude)
+//                        path.addLatitude(destination.latitude, longitude:destination.longitude)
+////                        path.addLatitude(21.291, longitude:-157.821) // Hawaii
+////                        path.addLatitude(37.423, longitude:-122.091) // Mountain View
+//
+//                        let polyline = GMSPolyline(path: path)
+//                        polyline.strokeColor = .red
+//                        polyline.strokeWidth = 5.0
+//                        polyline.map = self.mapView
+//
+//                        //self.view = self.mapView
+//                        }
+//                    }
+//
+//                }catch{
+//                    print("error in JSONSerialization")
+//                }
+//            }
+//        })
+//        task.resume()
         let config = URLSessionConfiguration.default
         let session = URLSession(configuration: config)
         
-        let url = URL(string: "http://maps.googleapis.com/maps/api/directions/json?origin=\(source.latitude),\(source.longitude)&destination=\(destination.latitude),\(destination.longitude)&sensor=false&mode=driving")!
+        let url = URL(string: "https://maps.googleapis.com/maps/api/directions/json?origin=\(source.latitude),\(source.longitude)&destination=\(destination.latitude),\(destination.longitude)&sensor=true&mode=driving&key=AIzaSyAyU5txJ86b25-_l0DW-IldSKGGYqQJn3M")!
         
         let task = session.dataTask(with: url, completionHandler: {
             (data, response, error) in
-            if error != nil {
-                print(error!.localizedDescription)
-            }else{
-                do {
-                    if let json : [String:Any] = try JSONSerialization.jsonObject(with: data!, options: .allowFragments) as? [String: Any]{
-                        
-                        let routes = json["routes"] as? [Any]
-                        let overview_polyline = routes?[0] as?[String:Any]
-                        let polyString = overview_polyline?["points"] as?String
-                        
-                        //Call this method to draw path on map
-                        self.showPath(polyStr: polyString!)
+            
+            DispatchQueue.main.async {
+                
+                if error != nil {
+                    print(error!.localizedDescription)
+                  //  AppManager.dissmissHud()
+                }
+                else {
+                    do {
+                        if let json : [String:Any] = try JSONSerialization.jsonObject(with: data!, options: .allowFragments) as? [String: Any]{
+                            
+                            guard let routes = json["routes"] as? NSArray else {
+//                                DispatchQueue.main.async {
+//                                    AppManager.dissmissHud()
+//                                }
+                                return
+                            }
+                            
+                            if (routes.count > 0) {
+                                let overview_polyline = routes[0] as? NSDictionary
+                                let dictPolyline = overview_polyline?["overview_polyline"] as? NSDictionary
+                                
+                                let points = dictPolyline?.object(forKey: "points") as? String
+                                
+                                self.showPath(polyStr: points!)
+                                
+                                DispatchQueue.main.async {
+                                  //  AppManager.dissmissHud()
+                                    
+                                    let bounds = GMSCoordinateBounds(coordinate: source, coordinate: destination)
+                                    //below bounds change as 0 check it on full screen
+                                    let update = GMSCameraUpdate.fit(bounds, with: UIEdgeInsetsMake(0, 0, 0, 0))
+                                   // self.vwMap!.moveCamera(update)
+                                }
+                            }
+                            else {
+                                DispatchQueue.main.async {
+                                  //  AppManager.dissmissHud()
+                                }
+                            }
+                        }
                     }
-                    
-                }catch{
-                    print("error in JSONSerialization")
+                    catch {
+                        print("error in JSONSerialization")
+//                        DispatchQueue.main.async {
+//                            AppManager.dissmissHud()
+//                        }
+                    }
                 }
             }
         })
         task.resume()
+    
+
     }
     func showPath(polyStr :String){
         let path = GMSPath(fromEncodedPath: polyStr)

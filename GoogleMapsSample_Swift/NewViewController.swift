@@ -162,7 +162,12 @@ class NewViewController: UIViewController,UITextFieldDelegate,UISearchBarDelegat
     
     @IBAction func doneButtonClicked(_ sender: Any) {
         let viewController=ViewController()
-        viewController.getPolylineRoute(from: originCoordinate, to: destinationCoordinate)
+        DispatchQueue.main.async {
+            viewController.polyLinesSelected( from:self.originCoordinate, to: self.destinationCoordinate) 
+
+            //getPolylineRoute(from: self.originCoordinate, to: self.destinationCoordinate)
+
+        }
     }
     
 }
