@@ -22,9 +22,20 @@ class SearchResultsController: UITableViewController {
         super.viewDidLoad()
         self.searchResults = Array()
         self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cellIdentifier")
+        //adding refresh to tableview on pulling down
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(refresh(_:)), for: .valueChanged)
         
+        if #available(iOS 10.0, *) {
+            tableView.refreshControl = refreshControl
+        } else {
+            tableView.backgroundView = refreshControl
+        }
     }
-    
+    //MARK:-other method
+    func refresh(_ refreshControl: UIRefreshControl) {
+    refreshControl.endRefreshing()
+    }
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.

@@ -52,7 +52,7 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
         locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
         self.mapView.delegate = self
-         self.loadingMapView(maptype:.normal)
+         //self.loadingMapView(maptype:.normal)
         if CLLocationManager.locationServicesEnabled() {
             locationManager.delegate = self
             locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
@@ -170,7 +170,7 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
     
 //MARK:- GMSMapView delegates method
     func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {
-     //   reverseGeocodeCoordinate(coordinate: position.target)
+        reverseGeocodeCoordinate(coordinate: position.target)
     }
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -259,7 +259,7 @@ class ViewController: UIViewController,CLLocationManagerDelegate,GMSMapViewDeleg
      - parameter sender: button search location
      */
     @IBAction func searchWithAddress(_ sender: AnyObject) {
-       // self.mapView.clear()
+        self.mapView.clear()
 //        let searchController = UISearchController(searchResultsController: searchResultController)
 //
 //        searchController.searchBar.delegate = self
